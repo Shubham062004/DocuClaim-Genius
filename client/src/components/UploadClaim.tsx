@@ -1,21 +1,12 @@
-
-import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, Upload } from "lucide-react";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { useToast } from "@/hooks/use-toast";
-import { Claim } from "@/pages/Dashboard";
-
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2, Upload } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { uploadInvoice } from '@/api/api';
+import type { Claim } from '@/api/types'; 
 interface UploadClaimProps {
   onUploadSuccess: (claim: Claim) => void;
 }
@@ -30,9 +21,9 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
-      
+
       // Create preview for images
-      if (selectedFile.type.startsWith("image/")) {
+      if (selectedFile.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = (event) => {
           setPreview(event.target?.result as string);
@@ -47,45 +38,40 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!file) {
       toast({
-        title: "No file selected",
-        description: "Please select a file to upload",
-        variant: "destructive",
+        title: 'No file selected',
+        description: 'Please select a file to upload',
+        variant: 'destructive',
       });
       return;
     }
-    
+
     setIsUploading(true);
-    
+
     try {
-      // Mock API call to upload file
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock successful upload and processing
-      const newClaim: Claim = {
-        id: Date.now().toString(),
-        patientName: "New Patient",
-        diagnosis: "Auto-detected diagnosis",
-        totalAmount: Math.floor(Math.random() * 1000) + 100,
-        dateOfTreatment: new Date().toISOString().split('T')[0],
-        status: "processed",
-        uploadDate: new Date().toISOString().split('T')[0],
-        documentUrl: preview || undefined,
-      };
-      
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await uploadInvoice(formData); // Use the imported function
+      const newClaim = response.processedData;
+
       onUploadSuccess(newClaim);
-      
+
       // Reset form
       setFile(null);
       setPreview(null);
-      
+
+      toast({
+        title: 'Upload Successful',
+        description: 'Your claim has been processed successfully',
+      });
     } catch (error) {
       toast({
-        title: "Upload failed",
-        description: "There was an error uploading your claim",
-        variant: "destructive",
+        title: 'Upload failed',
+        description: 'There was an error uploading your claim',
+        variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
@@ -118,13 +104,11 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
 
           {preview && (
             <div className="mt-4 border rounded-md overflow-hidden">
-              <AspectRatio ratio={16 / 9}>
-                <img 
-                  src={preview} 
-                  alt="Document preview" 
-                  className="object-cover w-full h-full"
-                />
-              </AspectRatio>
+              <img
+                src={preview}
+                alt="Document preview"
+                className="object-cover w-full h-full"
+              />
             </div>
           )}
 
@@ -137,9 +121,9 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
             </div>
           )}
 
-          <Button 
-            type="submit" 
-            className="w-full" 
+          <Button
+            type="submit"
+            className="w-full"
             disabled={!file || isUploading}
           >
             {isUploading ? (
