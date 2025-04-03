@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@langchain/google-genai": "^0.2.1",
+    "axios": "^1.8.4",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "invoice-detail-extractor-api": "file:",
@@ -18,6 +20,6 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.0.2"
   }
 }

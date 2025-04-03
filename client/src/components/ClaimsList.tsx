@@ -1,33 +1,18 @@
-
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, FileText, Search } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Claim } from "@/pages/Dashboard";
-import { useState } from "react";
-import { ClaimDetailsDialog } from "@/components/ClaimDetailsDialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { RefreshCw, FileText, Search } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Claim } from '@/pages/Dashboard';
+import { useState } from 'react';
+import { ClaimDetailsDialog } from '@/components/ClaimDetailsDialog';
 
 interface ClaimsListProps {
   claims: Claim[];
-  isLoading: boolean;
   onRefresh: () => void;
 }
 
-export function ClaimsList({ claims, isLoading, onRefresh }: ClaimsListProps) {
+export function ClaimsList({ claims, onRefresh }: ClaimsListProps) {
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -70,21 +55,13 @@ export function ClaimsList({ claims, isLoading, onRefresh }: ClaimsListProps) {
             variant="outline" 
             size="sm" 
             onClick={onRefresh}
-            disabled={isLoading}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          ) : claims.length === 0 ? (
+          {claims.length === 0 ? (
             <div className="text-center py-10">
               <FileText className="h-10 w-10 mx-auto text-gray-400" />
               <h3 className="mt-4 text-lg font-medium">No claims yet</h3>
