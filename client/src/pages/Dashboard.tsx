@@ -6,56 +6,59 @@ import { UploadClaim } from '@/components/UploadClaim';
 import { ClaimsList } from '@/components/ClaimsList';
 import { NavBar } from '@/components/NavBar';
 import { motion } from 'framer-motion';
-import { fetchClaims } from '@/api/fetchClaims';
+import { Invoice } from '@/api/api';
+import { fetchInvoices } from '@/api/api';
 
-export type Claim = {
-  id: string;
-  patientName: string;
-  diagnosis: string;
-  totalAmount: number;
-  dateOfTreatment: string;
-  status: 'processed' | 'pending' | 'rejected';
-  uploadDate: string;
-  documentUrl?: string;
-};
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [claims, setClaims] = useState<Claim[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
-  // Fetch claims with useCallback to prevent unnecessary re-renders
-  const fetchAndSetClaims = useCallback(async () => {
+  const fetchAndSetInvoices = useCallback(async () => {
     try {
-      const claimsData = await fetchClaims(); // Guaranteed to return an array
-      setClaims(claimsData); // ✅ No more TypeScript errors
+      const invoicesData = await fetchInvoices();
+      setInvoices(invoicesData);
     } catch (error) {
+      console.error('Error fetching invoices:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch claims',
+        description: 'Failed to fetch invoices',
         variant: 'destructive',
       });
     }
   }, [toast]);
 
   useEffect(() => {
-    // Check if user is authenticated
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
+    console.log("use effect called")
+    fetchAndSetInvoices();
+  },[navigate, fetchAndSetInvoices]);
 
-    fetchAndSetClaims();
-  }, [navigate, fetchAndSetClaims]);
-
-  const handleUploadSuccess = (newClaim: Claim) => {
-    setClaims((prevClaims) => [newClaim, ...prevClaims]);
+  const handleUploadSuccess = (newInvoice: Invoice) => {
+    setInvoices((prevInvoices) => [newInvoice, ...prevInvoices]);
     toast({
       title: 'Upload Successful',
-      description: 'Your claim has been processed successfully',
+      description: 'Your invoice has been processed successfully',
     });
+  };
+
+  const validateFile = (file: File) => {
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: 'Error',
+        description: 'File size must be less than 5MB',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    return true;
   };
 
   return (
@@ -63,29 +66,32 @@ const Dashboard = () => {
       <NavBar />
       <div className="container mx-auto py-8 px-4">
         <motion.div>
-          <h1 className="text-3xl font-bold mb-2">Medical Claims Dashboard</h1>
-          <p className="text-gray-600 mb-8">Upload, manage, and monitor your medical claims in one place</p>
+          <h1 className="text-3xl font-bold mb-2">Invoice Dashboard</h1>
+          <p className="text-gray-600 mb-8">Upload, manage, and monitor your invoices in one place</p>
         </motion.div>
         
-        {/* Upload Medical Invoice */}
+        {/* Upload Invoice */}
         <motion.div>
           <Card className="border-0 shadow-lg">
             <CardHeader />
             <CardContent>
-              <UploadClaim onUploadSuccess={handleUploadSuccess} />
+              <UploadClaim 
+                onUploadSuccess={handleUploadSuccess} 
+                validateFile={validateFile}
+              />
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Claims History */}
+        {/* Invoice History */}
         <motion.div>
           <Card className="border-0 shadow-lg mt-8">
             <CardHeader>
-              <CardTitle>Claims History</CardTitle>
-              <CardDescription>View and manage all your processed claims.</CardDescription>
+              <CardTitle>Invoice History</CardTitle>
+              <CardDescription>View and manage all your processed invoices.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ClaimsList claims={claims} onRefresh={fetchAndSetClaims} />
+              <ClaimsList invoices={invoices} onRefresh={fetchAndSetInvoices} />
             </CardContent>
           </Card>
         </motion.div>
