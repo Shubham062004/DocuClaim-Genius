@@ -64,10 +64,13 @@ class MongoUtils {
             const documents = await query.toArray();
             
             // Remove _id field from each document
-            return documents.map(doc => {
-                const { _id, ...rest } = doc;
-                return rest;
-            });
+            // return documents.map(doc => {
+            //     const { _id, ...rest } = doc;
+            //     return rest;
+            // });
+
+            return documents;
+
         } catch (error) {
             throw new Error(`Error getting documents: ${error.message}`);
         } finally {
