@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { uploadInvoice } from '@/api/api';
-import type { Claim } from '@/api/types'; 
+import { uploadInvoice, Invoice } from '@/api/api';
+
 interface UploadClaimProps {
-  onUploadSuccess: (claim: Claim) => void;
+  onUploadSuccess: (invoice: Invoice) => void;
+  validateFile?: (file: File) => boolean;
 }
 
-export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
+export function UploadClaim({ onUploadSuccess, validateFile }: UploadClaimProps) {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -20,6 +21,12 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
+      
+      // Validate file if validator is provided
+      if (validateFile && !validateFile(selectedFile)) {
+        return;
+      }
+
       setFile(selectedFile);
 
       // Create preview for images
@@ -30,7 +37,6 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
         };
         reader.readAsDataURL(selectedFile);
       } else {
-        // For PDFs, show a generic preview
         setPreview(null);
       }
     }
@@ -54,10 +60,13 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await uploadInvoice(formData); // Use the imported function
-      const newClaim = response.processedData;
+      const response = await uploadInvoice(formData);
+      
+      if (!response.processedData) {
+        throw new Error('Invalid response from server');
+      }
 
-      onUploadSuccess(newClaim);
+      onUploadSuccess(response.processedData);
 
       // Reset form
       setFile(null);
@@ -65,12 +74,13 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
 
       toast({
         title: 'Upload Successful',
-        description: 'Your claim has been processed successfully',
+        description: 'Your invoice has been processed successfully',
       });
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: 'Upload failed',
-        description: 'There was an error uploading your claim',
+        description: error instanceof Error ? error.message : 'There was an error uploading your invoice',
         variant: 'destructive',
       });
     } finally {
@@ -81,24 +91,24 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Upload Medical Invoice</CardTitle>
+        <CardTitle>Upload Invoice</CardTitle>
         <CardDescription>
-          Upload a medical invoice or discharge summary to process it with AI
+          Upload an invoice to process it with AI
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="file">Upload Document (PDF/Image)</Label>
+            <Label htmlFor="file">Upload Document (Image)</Label>
             <Input
               id="file"
               type="file"
-              accept=".pdf,image/*"
+              accept="image/*"
               onChange={handleFileChange}
               disabled={isUploading}
             />
             <p className="text-xs text-gray-500">
-              Supported formats: PDF, JPG, PNG (max 10MB)
+              Supported formats: JPG, PNG (max 5MB)
             </p>
           </div>
 
@@ -140,7 +150,7 @@ export function UploadClaim({ onUploadSuccess }: UploadClaimProps) {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center text-xs text-gray-500">
+      <CardFooter>
         Your document will be processed with AI to extract key information
       </CardFooter>
     </Card>
